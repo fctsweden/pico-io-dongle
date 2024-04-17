@@ -9,7 +9,8 @@ def printHelp():
     print("gpior <pin> # Read GPIO pin")
     print("adc <pin> # Read ADC pin. Use either gpio numbers or the adc channel numbers (0-4). Channel 4 is the internal temp sensor")
     print("pwm <pin> <frequency in Hz> <duty percent>")
-    print("i2c <frequency in Hz> # Instantiate i2c interface on pins 21(SCL) and 20(SDA)")
+    print("i2cselect <instance> # Select I2C instance 0 or 1 for following commands.")
+    print("i2c <freq> [instance] # Instantiate i2c interface. If instance is not provided, I2C0 is used.  Pin 21(SCL) and 20(SDA) are used for I2C0, 19(SCL) and 18(SDA) are used for I2C1.")
     print("i2cscan # Scan I2C bus for devices")
     print("i2cread <address> <memaddr> <length>")
 printHelp()
@@ -17,7 +18,19 @@ machine.Pin("LED",machine.Pin.OUT).value(1)
 
 #currently active pwm pins, dict of pin -> pwm object
 pwmpins={}
-
+i2cinstances={}
+def i2c_getInstance(inst,freq=100000):
+    i2c=None
+    if inst in i2cinstances:
+        i2c=i2cinstances[inst]
+        print("Reusing existing I2C instance",inst)
+    else:
+        if inst==0:
+            i2c=machine.I2C(0, scl=Pin(21), sda=Pin(20), freq=freq)
+        elif inst==1:
+            i2c=machine.I2C(1, scl=Pin(19), sda=Pin(18), freq=freq)
+    i2cinstances[inst]=i2c
+    return i2c
 while True:
 
     try:
@@ -79,13 +92,26 @@ while True:
             pwm.freq(freq)
             pwm.duty_ns(int(duty_ns))
             print("pwm:",pin,freq,duty)
-        elif cmdline[0]=="i2c":
+        elif cmdline[0]=="i2cselect":
             if (len(cmdline)!=2):
-                print("Usage: i2c <freq>")
+                print("Usage: i2cselect <instance> # Select I2C instance 0 or 1 for following commands")
+                continue
+            inst=int(cmdline[1],0)
+            print("Selecting I2C instance",inst)
+            i2c=i2c_getInstance(inst)
+        elif cmdline[0]=="i2c":
+            if (len(cmdline)<2):
+                print("Usage: i2c <freq> [instance] # Instantiate i2c interface")
                 continue
             freq=int(cmdline[1])
-            print("Setting I2C frequency to",freq)
-            i2c=machine.I2C(0, scl=Pin(21), sda=Pin(20), freq=freq)
+            if len(cmdline)>2:
+                inst=int(cmdline[2],0)
+                print("Selecting I2C instance",inst)
+                i2c=i2c_getInstance(inst)
+            else:
+                print("Selecting I2C instance",0)
+                i2c=i2c_getInstance(0,freq)
+            
         elif cmdline[0]=="i2cscan":
             if not 'i2c' in locals():
                 print("I2C not instantiated, use i2c command")
