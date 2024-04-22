@@ -12,7 +12,11 @@ def printHelp():
     print("i2cselect <instance> # Select I2C instance 0 or 1 for following commands.")
     print("i2c <freq> [instance] # Instantiate i2c interface. If instance is not provided, I2C0 is used.  Pin 21(SCL) and 20(SDA) are used for I2C0, 19(SCL) and 18(SDA) are used for I2C1.")
     print("i2cscan # Scan I2C bus for devices")
-    print("i2cread <address> <memaddr> <length>")
+    print("i2cread <address> <length>")
+    print("i2cwrite <address> <data>")
+    print("i2c_readreg <address> <register> <length>")
+    print("i2c_writereg <address> <register> <data>")
+
 printHelp()
 machine.Pin("LED",machine.Pin.OUT).value(1)
 
@@ -111,7 +115,8 @@ while True:
             else:
                 print("Selecting I2C instance",0)
                 i2c=i2c_getInstance(0,freq)
-            
+            print("i2c: OK")
+
         elif cmdline[0]=="i2cscan":
             if not 'i2c' in locals():
                 print("I2C not instantiated, use i2c command")
@@ -122,34 +127,38 @@ while True:
                 print("Device at address",hex(device))
             print("Scan complete, found ",len(devices),"devices")
         elif cmdline[0]=="i2cread":
-            if (len(cmdline)!=4):
-                print("Usage: i2cread <address> <memaddr> <length>")
+            if (len(cmdline)!=3):
+                print("Usage: i2cread <address> <length>")
                 continue
             address=int(cmdline[1],0)
-            memaddr=int(cmdline[2],0)
-            length=int(cmdline[3])
+            length=int(cmdline[2])
             print("Reading",length,"bytes from",hex(address))
-            data=i2c.readfrom_mem(address,memaddr, length)
-            print("i2cread:",data)
+            data=i2c.readfrom(address, length)
+            print("i2cread:",data.hex())
         elif cmdline[0]=="i2cwrite":
             if (len(cmdline)<3):
                 print("Usage: i2cwrite <address> <data>")
                 continue
-            address=int(cmdline[1],16)
-            data=bytearray([int(x,16) for x in cmdline[2:]])
+            address=int(cmdline[1],0)
+            data=bytearray(bytes.fromhex("".join(cmdline[2:])))
             print("Writing",len(data),"bytes to",hex(address))
-            acks=i2c.writeto(address,data)
-            print("i2cwrite:ACK:",acks)
+            try:
+                acks=i2c.writeto(address,data)
+                print("i2cwrite:ACK:",acks)
+            except OSError as e:
+                print("i2cwrite:Error:",e)
         elif cmdline[0]=="i2c_readreg":
             if (len(cmdline)!=4):
                 print("Usage: i2c_readreg <address> <register> <length>")
                 continue
-            address=int(cmdline[1],16)
-            register=int(cmdline[2],16)
+            address=int(cmdline[1],0)
+            register=int(cmdline[2],0)
             length=int(cmdline[3])
             print("Reading",length,"bytes from register",hex(register),"of",hex(address))
             data=i2c.readfrom_mem(address,register,length)
-            print("i2c_readreg:",data)
+            print(data)
+            print("i2c_readreg:",data.hex())
+
         elif cmdline[0]=="i2c_writereg":
             if (len(cmdline)<4):
                 print("Usage: i2c_writereg <address> <register> <data>")

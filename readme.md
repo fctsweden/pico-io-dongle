@@ -35,3 +35,10 @@ print(p.gpioread("0"))
 print(p.adc(0))
 print(p.pwm(25,1000,50))
 ```
+
+
+# Creating an uf2 file
+use picotool to save a copy of a connected pico to an image file:
+
+    picotool save out.uf2
+
