@@ -5,7 +5,7 @@ import time
 from machine import Timer
 
 # pi pico IO version
-version = "2.0"
+version = "2.1"
 
 #currently active pwm pins, dict of pin -> pwm object
 pwmpins={}
@@ -19,6 +19,13 @@ pwm_low_time = 0
 last_time = 0
 pwm_frequency = 0
 pwm_duty_cycle = 0
+
+# Define ADC pin
+# adc init 
+adc0=machine.ADC(Pin(26))
+adc1=machine.ADC(Pin(27))
+adc2=machine.ADC(Pin(28))
+
 
 print(f"Pico IO bridge verion {version}")
 
@@ -88,6 +95,7 @@ timer = Timer()
 # Configure the timer to call the callback every 1 second (1000 ms)
 timer.init(period=1000, mode=Timer.PERIODIC, callback=pwm_handle_task)
 
+
 while True:
 
     try:
@@ -124,10 +132,17 @@ while True:
             if (len(cmdline)!=2):
                 print("Usage: adc <pin>")
                 continue
+            value = 0
             pin=int(cmdline[1])
             print("Reading ADC pin",pin)
-            adc=machine.ADC(pin)
-            print(f"adc:{pin}", adc.read_u16())
+            if(pin == 0):
+                value = adc0.read_u16()
+            elif (pin == 1):
+                value = adc1.read_u16()
+            elif (pin == 2):
+                value = adc2.read_u16()
+            print(f"adc:{pin}", value)
+
         elif cmdline[0]=="pwm":
             if (len(cmdline)!=4):
                 print("Usage: pwm <pin> <freq> <duty percent>")
