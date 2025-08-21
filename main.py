@@ -3,14 +3,15 @@ import machine
 from machine import Pin
 import time
 from machine import Timer
+from spi_io import spi_io
 
 # pi pico IO version
-version = "2.1"
+version = "2.2"
 
 #currently active pwm pins, dict of pin -> pwm object
 pwmpins={}
 i2cinstances={}
-
+spi_instances={}
 
 # Define variables for PWM input reading
 PWM_IN_PIN     = 10
@@ -44,6 +45,9 @@ def printHelp():
     print("i2cwrite <address> <data>")
     print("i2c_readreg <address> <register> <length>")
     print("i2c_writereg <address> <register> <data>")
+    print("spi_init <instance> <freq>")
+    print("spi_write <instance> <data>")
+    print("spi_read <instance> <command>")
 
 # Callback function for the interrupt
 def pwm_callback(pin):
@@ -80,7 +84,7 @@ def i2c_getInstance(inst,freq=100000):
         print("Reusing existing I2C instance",inst)
     else:
         if inst==0:
-            i2c=machine.I2C(0, scl=Pin(21), sda=Pin(20), freq=freq)
+            i2c=machine.I2C(0, scl=Pin(5), sda=Pin(4), freq=freq)
         elif inst==1:
             i2c=machine.I2C(1, scl=Pin(19), sda=Pin(18), freq=freq)
     i2cinstances[inst]=i2c
@@ -105,6 +109,7 @@ while True:
             break
         elif cmdline[0]=="version":
             print(f"version: {version}")
+        # GPIO commands
         elif cmdline[0]=="gpiow":
             if (len(cmdline)!=3):
                 print("Usage: gpiow <pin> <value>")
@@ -128,6 +133,8 @@ while True:
             print("Reading pin",pin)
             p=machine.Pin(pin,machine.Pin.IN)
             print(f"gpior:{pin}", p.value())
+
+        # ADC command    
         elif cmdline[0]=="adc":
             if (len(cmdline)!=2):
                 print("Usage: adc <pin>")
@@ -143,6 +150,7 @@ while True:
                 value = adc2.read_u16()
             print(f"adc:{pin}", value)
 
+        # PWM commands
         elif cmdline[0]=="pwm":
             if (len(cmdline)!=4):
                 print("Usage: pwm <pin> <freq> <duty percent>")
@@ -180,6 +188,7 @@ while True:
                 continue
             print("pwmr:",pin, pwm_frequency)
 
+        # I2C commands
         elif cmdline[0]=="i2cselect":
             if (len(cmdline)!=2):
                 print("Usage: i2cselect <instance> # Select I2C instance 0 or 1 for following commands")
@@ -200,7 +209,6 @@ while True:
                 print("Selecting I2C instance",0)
                 i2c=i2c_getInstance(0,freq)
             print("i2c: OK")
-
         elif cmdline[0]=="i2cscan":
             if not 'i2c' in locals():
                 print("I2C not instantiated, use i2c command")
@@ -242,7 +250,6 @@ while True:
             data=i2c.readfrom_mem(address,register,length)
             print(data)
             print("i2c_readreg:",data.hex())
-
         elif cmdline[0]=="i2c_writereg":
             if (len(cmdline)<4):
                 print("Usage: i2c_writereg <address> <register> <data>")
@@ -252,7 +259,49 @@ while True:
             data=bytearray([int(x,16) for x in cmdline[3:]])
             print("Writing",len(data),"bytes to register",hex(register),"of",hex(address))
             i2c.writeto_mem(address,register,data)
-            
+
+        # SPI commands
+        elif cmdline[0]=="spi_init":
+            if (len(cmdline)<3):
+                print("Usage: spi <instance> <freq> # Instantiate spi interface")
+                continue
+            inst=int(cmdline[1], 0)
+            freq=int(cmdline[2], 0)
+            print("Selecting SPI instance",inst)
+            spi_dev = spi_io(inst, freq)
+            spi_instances[inst] = spi_dev
+            print("spi_init: OK")
+        elif cmdline[0]=="spi_write":
+            if (len(cmdline)<3):
+                print("Usage: spi_write <instance> <data>")
+                print("e.g.: spi_write 1 AA 00 00")
+                continue
+            instance=int(cmdline[1],0)
+            data=bytearray(bytes.fromhex("".join(cmdline[2:])))
+            print("Writing",len(data),"bytes to spi device",hex(instance))
+            spi_dev= spi_instances[instance]
+            try:
+                acks=spi_dev.spi_write(data)
+                print("spi_write:ACK:",acks)
+            except OSError as e:
+                print("spi_write:Error:",e)
+        elif cmdline[0]=="spi_read":
+            if (len(cmdline)< 3):
+                print("Usage: spi_read <instance> <command>")
+                print("e.g.: spi_read 1 F0 00 00 00")
+                continue
+            instance=int(cmdline[1],0)
+            data=bytearray(bytes.fromhex("".join(cmdline[2:])))
+            spi_dev= spi_instances[instance]
+            print("Writing",len(data),"bytes to spi device",hex(instance))
+            spi_dev= spi_instances[instance]
+            try:
+                rx_data = bytearray(len(data))   # Buffer for response
+                acks=spi_dev.spi_write_read(data, rx_data)
+                print("spi_read:",rx_data.hex())
+            except OSError as e:
+                print("spi_read:Error:",e)
+
         else:
             print("Unknown command")
             printHelp()
