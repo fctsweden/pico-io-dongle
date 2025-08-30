@@ -142,7 +142,7 @@ while True:
             pin=int(cmdline[1])
             pwm_in_obj = pwm_in(pin)
             pwm_in_instances[pin] = pwm_in_obj
-            print(f"pwm_in {pin}: OK")
+            print("pwm_in:", pin, "OK")
         elif cmdline[0]=="pwm_read":
             if (len(cmdline)!=2):
                 print("Usage: pwm_read <pin>")
