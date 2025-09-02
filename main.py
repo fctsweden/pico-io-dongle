@@ -149,7 +149,7 @@ while True:
                 continue
             pin=int(cmdline[1])
             if(pin in pwm_in_instances):
-                print("pwm_read:",pin, pwm_in_instances[pin].pwm_read())
+                print(f"pwm_read:{pin}", pwm_in_instances[pin].pwm_read())
             else:
                 print(f"No Supported. Init by pwm_in {pin}")
 
