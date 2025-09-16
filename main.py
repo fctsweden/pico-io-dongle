@@ -1,13 +1,14 @@
 
 import machine
-from machine import Pin
+from machine import UART, Pin
 import time
+import sys
 
 from spi_io import spi_io
 from pwm_in import pwm_in
 
 # pi pico IO version
-version = "2.3"
+version = "2.4"
 
 
 #----- HW configuration for test bench -------------
@@ -22,6 +23,15 @@ spi_instances={}
 adc0=machine.ADC(Pin(26))
 adc1=machine.ADC(Pin(27))
 adc2=machine.ADC(Pin(28))
+
+
+# Initialize UART0
+uart0 = UART(0, baudrate=115200, tx=Pin(0), rx=Pin(1))
+# Enable pull-up on RX (pin 1 / GP1)
+#rx_pin = Pin(1, Pin.IN, Pin.PULL_UP)
+
+cbus_tx_enable_pin=machine.Pin(2,machine.Pin.OUT)
+cbus_tx_enable_pin.value(1)
 
 print(f"Pico IO bridge verion {version}")
 
@@ -266,6 +276,37 @@ while True:
                 print("spi_read:",rx_data.hex())
             except OSError as e:
                 print("spi_read:Error:",e)
+
+        elif cmdline[0]=="cbus":
+            if (len(cmdline)<2):
+                print("Usage: cbus <cmd>")
+                print("e.g. ReadFCACData: cbus  0x00 0x0C 0x11 0x00 0x00")
+                continue
+
+            cmd=bytearray(bytes.fromhex("".join(cmdline[1:])))
+            try:
+                # enable cbus write 
+                cbus_tx_enable_pin.value(0)
+                uart0.write(cmd)
+                time.sleep_us(500)  # 500 µs = 0.5 ms                
+                # disable cbus tx
+                cbus_tx_enable_pin.value(1)
+
+                #drop echoed bytes on rx buffer
+                echo = uart0.read(len(cmd))
+                # wait resp with 5ms timeout
+                cnt = 5
+                while cnt:
+                    if uart0.any():   # check if there is something in buffer
+                        data = uart0.read()   # read one line (until \n or timeout)
+                        if data:
+                            sys.stdout.buffer.write(data)
+                            break
+                    cnt -= 1
+                    time.sleep_ms(1)  # sleep 1 millisecond
+
+            except OSError as e:
+                print("cbus:Error:",e)
 
         else:
             print("Unknown command")
