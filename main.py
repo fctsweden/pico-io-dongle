@@ -288,8 +288,10 @@ while True:
                 # enable cbus write 
                 cbus_tx_enable_pin.value(0)
                 uart0.write(cmd)
-                time.sleep_us(500)  # 500 µs = 0.5 ms                
-                # disable cbus tx
+                while not uart0.txdone():
+                    pass   # wait until hardware finished sending
+                time.sleep_us(100)  # 100 µs
+                # disable cbus tx                
                 cbus_tx_enable_pin.value(1)
 
                 #drop echoed bytes on rx buffer
@@ -300,6 +302,7 @@ while True:
                     if uart0.any():   # check if there is something in buffer
                         data = uart0.read()   # read one line (until \n or timeout)
                         if data:
+                            #print(data.hex())
                             sys.stdout.buffer.write(data)
                             break
                     cnt -= 1
