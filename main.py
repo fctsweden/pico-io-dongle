@@ -26,9 +26,7 @@ adc2=machine.ADC(Pin(28))
 
 
 # Initialize UART0
-uart0 = UART(0, baudrate=115200, tx=Pin(0), rx=Pin(1))
-# Enable pull-up on RX (pin 1 / GP1)
-#rx_pin = Pin(1, Pin.IN, Pin.PULL_UP)
+uart0 = UART(0, baudrate=115200, tx=Pin(0), rx=Pin(1, Pin.IN, Pin.PULL_UP))
 
 cbus_tx_enable_pin=machine.Pin(2,machine.Pin.OUT)
 cbus_tx_enable_pin.value(1)
