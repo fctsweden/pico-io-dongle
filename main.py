@@ -57,7 +57,7 @@ def i2c_getInstance(inst,freq=100000):
     i2c=None
     if inst in i2c_instances:
         i2c=i2c_instances[inst]
-        print("Reusing existing I2C instance",inst)
+        #print("Reusing existing I2C instance",inst)
     else:
         if inst==0:
             i2c=machine.I2C(0, scl=Pin(5), sda=Pin(4), freq=freq)
@@ -90,7 +90,6 @@ while True:
             except:
                 pass
             value=int(cmdline[2])
-            print("Setting pin",pin,"to",value)
             p=machine.Pin(pin,machine.Pin.OUT)
             p.value(value)
             print(f"gpiow:{pin}", value)
@@ -99,7 +98,6 @@ while True:
                 print("Usage: gpior <pin>")
                 continue
             pin=int(cmdline[1])
-            print("Reading pin",pin)
             p=machine.Pin(pin,machine.Pin.IN)
             print(f"gpior:{pin}", p.value())
 
@@ -110,7 +108,6 @@ while True:
                 continue
             value = 0
             pin=int(cmdline[1])
-            print("Reading ADC pin",pin)
             if(pin == 0):
                 value = adc0.read_u16()
             elif (pin == 1):
@@ -130,13 +127,10 @@ while True:
             if (duty<0 or duty>100):
                 print("pwm:err Duty cycle must be between 0 and 100")
                 continue
-            print("Setting PWM pin",pin,"to",freq,"Hz",duty,"%")
             period_us=1000000/freq
             duty_ns = duty*period_us*1000/100
-            print("Period:",period_us,"us, Duty:",duty_ns,"ns")
             if pin in pwm_instances:
                 pwm=pwm_instances[pin]
-                print("Reusing existing PWM object",pwm.freq(),pwm.duty_ns())
             else:
                 pwm=machine.PWM(machine.Pin(pin))
             pwm_instances[pin]=pwm
@@ -167,7 +161,7 @@ while True:
                 print("Usage: i2cselect <instance> # Select I2C instance 0 or 1 for following commands")
                 continue
             inst=int(cmdline[1],0)
-            print("Selecting I2C instance",inst)
+            #print("Selecting I2C instance",inst)
             i2c=i2c_getInstance(inst)
         elif cmdline[0]=="i2c":
             if (len(cmdline)<2):
@@ -176,17 +170,13 @@ while True:
             freq=int(cmdline[1])
             if len(cmdline)>2:
                 inst=int(cmdline[2],0)
-                print("Selecting I2C instance",inst)
                 i2c=i2c_getInstance(inst)
             else:
-                print("Selecting I2C instance",0)
                 i2c=i2c_getInstance(0,freq)
             print("i2c: OK")
         elif cmdline[0]=="i2cscan":
             if not 'i2c' in locals():
-                print("I2C not instantiated, use i2c command")
                 continue
-            print("Scanning I2C bus")
             devices=i2c.scan()
             for device in devices:
                 print("Device at address",hex(device))
@@ -197,7 +187,6 @@ while True:
                 continue
             address=int(cmdline[1],0)
             length=int(cmdline[2])
-            print("Reading",length,"bytes from",hex(address))
             data=i2c.readfrom(address, length)
             print("i2cread:",data.hex())
         elif cmdline[0]=="i2cwrite":
@@ -206,7 +195,6 @@ while True:
                 continue
             address=int(cmdline[1],0)
             data=bytearray(bytes.fromhex("".join(cmdline[2:])))
-            print("Writing",len(data),"bytes to",hex(address))
             try:
                 acks=i2c.writeto(address,data)
                 print("i2cwrite:ACK:",acks)
@@ -219,7 +207,6 @@ while True:
             address=int(cmdline[1],0)
             register=int(cmdline[2],0)
             length=int(cmdline[3])
-            print("Reading",length,"bytes from register",hex(register),"of",hex(address))
             data=i2c.readfrom_mem(address,register,length)
             print(data)
             print("i2c_readreg:",data.hex())
@@ -230,7 +217,6 @@ while True:
             address=int(cmdline[1],16)
             register=int(cmdline[2],16)
             data=bytearray([int(x,16) for x in cmdline[3:]])
-            print("Writing",len(data),"bytes to register",hex(register),"of",hex(address))
             i2c.writeto_mem(address,register,data)
 
         # SPI commands
@@ -240,7 +226,6 @@ while True:
                 continue
             inst=int(cmdline[1], 0)
             freq=int(cmdline[2], 0)
-            print("Selecting SPI instance",inst)
             spi_dev = spi_io(inst, freq)
             spi_instances[inst] = spi_dev
             print("spi_init: OK")
@@ -251,7 +236,6 @@ while True:
                 continue
             instance=int(cmdline[1],0)
             data=bytearray(bytes.fromhex("".join(cmdline[2:])))
-            print("Writing",len(data),"bytes to spi device",hex(instance))
             spi_dev= spi_instances[instance]
             try:
                 acks=spi_dev.spi_write(data)
@@ -266,7 +250,6 @@ while True:
             instance=int(cmdline[1],0)
             data=bytearray(bytes.fromhex("".join(cmdline[2:])))
             spi_dev= spi_instances[instance]
-            print("Writing",len(data),"bytes to spi device",hex(instance))
             spi_dev= spi_instances[instance]
             try:
                 rx_data = bytearray(len(data))   # Buffer for response
