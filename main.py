@@ -8,7 +8,7 @@ from spi_io import spi_io
 from pwm_in import pwm_in
 
 # pi pico IO version
-version = "2.4"
+version = "2.5"
 
 
 #----- HW configuration for test bench -------------
@@ -27,6 +27,10 @@ adc2=machine.ADC(Pin(28))
 
 # Initialize UART0
 uart0 = UART(0, baudrate=115200, tx=Pin(0), rx=Pin(1, Pin.IN, Pin.PULL_UP))
+
+# Value init to HIGH, to make sure valve is OFF from startup / reset
+valve_ctrl_pin = Pin(20, Pin.OUT, Pin.PULL_UP)
+valve_ctrl_pin.value(1)
 
 cbus_tx_enable_pin=machine.Pin(2,machine.Pin.OUT)
 cbus_tx_enable_pin.value(1)
@@ -125,14 +129,14 @@ while True:
             freq=int(cmdline[2])
             duty=int(cmdline[3])
             if (duty<0 or duty>100):
-                print("pwm:err Duty cycle must be between 0 and 100")
+                print("pwm: Duty Err")
                 continue
             period_us=1000000/freq
             duty_ns = duty*period_us*1000/100
             if pin in pwm_instances:
                 pwm=pwm_instances[pin]
             else:
-                pwm=machine.PWM(machine.Pin(pin))
+                pwm=machine.PWM(machine.Pin(pin, Pin.PULL_UP))
             pwm_instances[pin]=pwm
             pwm.freq(freq)
             pwm.duty_ns(int(duty_ns))
