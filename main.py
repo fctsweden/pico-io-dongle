@@ -6,9 +6,10 @@ import sys
 
 from spi_io import spi_io
 from pwm_in import pwm_in
+from shortcircuit import ShortCircuit
 
 # pi pico IO version
-version = "2.5"
+version = "2.6"
 
 
 #----- HW configuration for test bench -------------
@@ -32,8 +33,12 @@ uart0 = UART(0, baudrate=115200, tx=Pin(0), rx=Pin(1, Pin.IN, Pin.PULL_UP))
 valve_ctrl_pin = Pin(20, Pin.OUT, Pin.PULL_UP)
 valve_ctrl_pin.value(1)
 
+#Cbus interface
 cbus_tx_enable_pin=machine.Pin(2,machine.Pin.OUT)
 cbus_tx_enable_pin.value(1)
+
+# short circuit
+short_circuit_obj = ShortCircuit()
 
 print(f"Pico IO bridge verion {version}")
 
@@ -56,6 +61,7 @@ def printHelp():
     print("spi_init <instance> <freq>")
     print("spi_write <instance> <data>")
     print("spi_read <instance> <command>")
+    print("short <cell> <time>")
 
 def i2c_getInstance(inst,freq=100000):
     i2c=None
@@ -262,6 +268,7 @@ while True:
             except OSError as e:
                 print("spi_read:Error:",e)
 
+        # Cbus command:
         elif cmdline[0]=="cbus":
             if (len(cmdline)<2):
                 print("Usage: cbus <cmd>")
@@ -296,6 +303,16 @@ while True:
             except OSError as e:
                 print("cbus:Error:",e)
 
+        # Short circuite:
+        elif cmdline[0]=="short":
+            if (len(cmdline)!=3):
+                print("Usage: short <cell> <time>")
+                continue
+
+            cell=int(cmdline[1])
+            short_time =int(cmdline[2])
+            short_circuit_obj.short(cell, short_time)
+            print(f"short:{cell}", short_time)
         else:
             print("Unknown command")
             printHelp()
