@@ -12,9 +12,9 @@ class ShortCircuit:
 
         #Short circuit Interface
         self.pulse = machine.PWM(machine.Pin(21, Pin.PULL_UP))
-        self.pulse.freq(10000)
-        self.pulse.duty_ns(int(50000)) # 50%
-       
+        self.pulse.freq(20000)
+        self.pulse.duty_ns(int(25000)) # 50%
+
         self.ENABLE = Pin(3, Pin.OUT, Pin.PULL_UP)
         self.A0 = Pin(6, Pin.OUT)
         self.A1 = Pin(7, Pin.OUT)
