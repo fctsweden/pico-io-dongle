@@ -14,11 +14,11 @@ class ShortCircuit:
         self.pulse = machine.PWM(machine.Pin(21, Pin.PULL_UP))
         self.pulse.freq(20000)
         self.pulse.duty_ns(int(25000)) # 50%
-
-        self.ENABLE = Pin(3, Pin.OUT, Pin.PULL_UP)
-        self.A0 = Pin(6, Pin.OUT)
-        self.A1 = Pin(7, Pin.OUT)
-        self.A2 = Pin(8, Pin.OUT)
+        
+        self.ENABLE = Pin(3, Pin.OUT, value=1)
+        self.A0 = Pin(6, Pin.OUT, value=0)
+        self.A1 = Pin(7, Pin.OUT, value=0)
+        self.A2 = Pin(8, Pin.OUT, value=0)
         # Create a Timer object
         self.short_timer = Timer()
 

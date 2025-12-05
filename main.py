@@ -9,7 +9,7 @@ from pwm_in import pwm_in
 from shortcircuit import ShortCircuit
 
 # pi pico IO version
-version = "2.6"
+version = "2.6.1"
 
 
 #----- HW configuration for test bench -------------
