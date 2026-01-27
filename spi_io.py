@@ -10,25 +10,29 @@ class spi_io:
                        sck=Pin(10), mosi=Pin(11), miso=Pin(12))
         # Test station support 2 SPI sensors in SPI1, nna 20/Aug/2025
         # Initialize Chip Select (CS) pin, active low
-        if(inst == 1):
-            self.cs = Pin(13, Pin.OUT, value=1)
-        else:
-            self.cs = Pin(9, Pin.OUT, value=1)
+        #if(inst == 1):
+        self.cs1 = Pin(13, Pin.OUT, value=1)
+        #else:
+        self.cs2 = Pin(9, Pin.OUT, value=1)
 
         print("spi1 interface init done")
     def spi_write_read(self, data, rx_data):
         """Write data to SPI and read response."""
-        self.cs.value(0)  # Select the peripheral
+        self.cs1.value(0)  # Select the peripheral
+        self.cs2.value(0)  # Select the peripheral
         time.sleep_us(50)  # Small delay for stability
         self.spi.write_readinto(data, rx_data)  # Write data and read response
         time.sleep_us(50)  # Small delay for stability
-        self.cs.value(1)  # Deselect the peripheral
+        self.cs1.value(1)  # Deselect the peripheral
+        self.cs2.value(1)  # Deselect the peripheral
         return rx_data
 
     def spi_write(self, data):
         """Write data to SPI device."""
-        self.cs.value(0)  # Select the peripheral
+        self.cs1.value(0)  # Select the peripheral
+        self.cs2.value(0)  # Select the peripheral
         time.sleep_us(50)  # Small delay for stability
         self.spi.write(data)  # Send data
         time.sleep_us(50)  # Small delay for stability
-        self.cs.value(1)  # Deselect the peripheral
+        self.cs1.value(1)  # Deselect the peripheral
+        self.cs2.value(1)  # Deselect the peripheral
